@@ -2004,6 +2004,7 @@ textarea {
     background: #f8fbfc;
     backdrop-filter: none;
     opacity: 0;
+    visibility: hidden;
     transform: translateY(-12px);
     pointer-events: none;
     overflow-y: auto;
@@ -2035,6 +2036,7 @@ textarea {
 
   body.nav-open .nav-menu {
     opacity: 1;
+    visibility: visible;
     transform: translateY(0);
     pointer-events: auto;
   }
