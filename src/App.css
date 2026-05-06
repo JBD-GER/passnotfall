@@ -203,6 +203,11 @@ button:disabled {
 .pricing-section,
 .assistant-section,
 .seo-section,
+.topic-section,
+.airport-section,
+.document-section,
+.guide-hero,
+.guide-section,
 .faq-section,
 .more-info-section,
 .legal-page,
@@ -481,6 +486,11 @@ h3 {
 .pricing-section,
 .assistant-section,
 .seo-section,
+.topic-section,
+.airport-section,
+.document-section,
+.guide-hero,
+.guide-section,
 .faq-section,
 .more-info-section,
 .legal-page,
@@ -788,6 +798,174 @@ select {
   background: rgba(255, 255, 255, 0.76);
   color: var(--muted);
   line-height: 1.65;
+}
+
+.topic-section,
+.airport-section,
+.document-section,
+.guide-hero,
+.guide-section {
+  text-align: center;
+}
+
+.topic-section .section-kicker,
+.airport-section .section-kicker,
+.document-section .section-kicker,
+.guide-hero .section-kicker,
+.guide-section .section-kicker {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.topic-section h2,
+.airport-section h2,
+.document-section h2,
+.guide-hero h1,
+.guide-section h2 {
+  max-width: 920px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.topic-grid,
+.document-grid,
+.guide-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+  text-align: left;
+}
+
+.topic-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.document-grid,
+.guide-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.topic-grid article,
+.document-grid article,
+.guide-grid article {
+  padding: 1.35rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.topic-grid p,
+.document-grid p,
+.airport-section p,
+.guide-hero p,
+.guide-grid p,
+.guide-grid li,
+.guide-cta p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.topic-grid a,
+.topic-grid button {
+  display: inline-flex;
+  margin-top: 0.4rem;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--red);
+  cursor: pointer;
+  font-weight: 900;
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+}
+
+.airport-section {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 2rem;
+  align-items: center;
+  text-align: left;
+}
+
+.airport-section .section-kicker,
+.airport-section h2 {
+  margin-left: 0;
+}
+
+.airport-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.airport-list span {
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: white;
+  color: #31445a;
+  font-size: 0.88rem;
+  font-weight: 850;
+}
+
+.guide-hero {
+  max-width: 940px;
+  padding-top: clamp(3rem, 7vw, 5rem);
+}
+
+.guide-hero p {
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+}
+
+.guide-hero .primary-button {
+  margin-top: 1rem;
+}
+
+.guide-grid article:first-child {
+  border-color: rgba(215, 38, 46, 0.2);
+  background: #fff7f4;
+}
+
+.guide-grid ul {
+  margin: 1rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.guide-grid li + li {
+  margin-top: 0.55rem;
+}
+
+.guide-faq {
+  padding-top: 3rem;
+}
+
+.guide-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: clamp(1.35rem, 4vw, 2rem);
+  border: 1px solid rgba(215, 38, 46, 0.18);
+  border-radius: var(--radius-lg);
+  background: #fff7f4;
+  text-align: left;
+}
+
+.guide-cta .section-kicker,
+.guide-cta h2 {
+  margin-left: 0;
+}
+
+.guide-cta h2 {
+  font-size: clamp(1.75rem, 3.6vw, 2.9rem);
+}
+
+.guide-cta p {
+  max-width: 720px;
+  margin-bottom: 0;
 }
 
 .faq-grid {
@@ -1735,14 +1913,32 @@ details p {
   .result-grid,
   .pricing-grid,
   .seo-copy,
+  .topic-grid,
+  .airport-section,
+  .document-grid,
+  .guide-grid,
   .faq-grid,
   .info-card-grid {
     grid-template-columns: 1fr;
   }
 
+  .airport-section {
+    text-align: center;
+  }
+
+  .airport-section .section-kicker,
+  .airport-section h2 {
+    margin-left: auto;
+  }
+
+  .airport-list {
+    justify-content: center;
+  }
+
   .preview-heading,
   .site-footer,
-  .result-hero {
+  .result-hero,
+  .guide-cta {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -1800,6 +1996,11 @@ details p {
   .pricing-section,
   .assistant-section,
   .seo-section,
+  .topic-section,
+  .airport-section,
+  .document-section,
+  .guide-hero,
+  .guide-section,
   .faq-section,
   .more-info-section,
   .legal-page {
@@ -1837,6 +2038,11 @@ details p {
   .checker-section,
   .flow-section,
   .seo-section,
+  .topic-section,
+  .airport-section,
+  .document-section,
+  .guide-hero,
+  .guide-section,
   .faq-section,
   .more-info-section,
   .legal-page,
@@ -1892,6 +2098,23 @@ details p {
   .action-list li::before {
     width: 2rem;
     height: 2rem;
+  }
+
+  .topic-grid article,
+  .document-grid article,
+  .guide-grid article,
+  .seo-copy p,
+  details {
+    padding: 1rem;
+  }
+
+  .airport-list span {
+    width: 100%;
+    text-align: center;
+  }
+
+  .guide-cta {
+    align-items: stretch;
   }
 }
 

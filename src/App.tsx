@@ -87,13 +87,22 @@ type EmailStep = {
 
 type FormStep = ChoiceStep | SelectStep | MultiStep | PeopleStep | EmailStep;
 type View = "start" | "form" | "checkout" | "loading" | "result";
-type Route = "home" | "impressum" | "datenschutz" | "agb";
+type LegalRoute = "impressum" | "datenschutz" | "agb";
+type SeoRoute = "reisepass-abgelaufen" | "personalausweis-abgelaufen";
+type Route = "home" | LegalRoute | SeoRoute;
 type ConfirmationStatus = "idle" | "sending" | "sent" | "error" | "skipped";
 type LegalModal = "agb" | "privacy" | null;
 
 type ConsentSettings = {
   statistics: boolean;
   marketing: boolean;
+};
+
+type PageMeta = {
+  title: string;
+  description: string;
+  path: string;
+  robots?: string;
 };
 
 declare global {
@@ -397,6 +406,169 @@ const legalHighlights = [
   "Geeignet bei Reisepass abgelaufen oder Personalausweis abgelaufen"
 ];
 
+const siteUrl = "https://passnotfall.de";
+
+const pageMeta: Record<Route, PageMeta> = {
+  home: {
+    title: "PassNotfall: Reisepass oder Personalausweis abgelaufen vor dem Flug",
+    description:
+      "Reisepass abgelaufen, Personalausweis abgelaufen oder Dokument vergessen? PassNotfall erstellt eine private Sofort-Auswertung mit Stelle, Unterlagen und nächsten Schritten.",
+    path: "/"
+  },
+  "reisepass-abgelaufen": {
+    title: "Reisepass abgelaufen vor dem Flug: Was jetzt tun?",
+    description:
+      "Was tun, wenn der Reisepass abgelaufen ist und der Flug bald startet? Überblick zu Airline, Passbehörde, Flughafen-Stelle, Ersatzdokumenten und Unterlagen.",
+    path: "/reisepass-abgelaufen"
+  },
+  "personalausweis-abgelaufen": {
+    title: "Personalausweis abgelaufen vor Reise oder Flug: schnelle Orientierung",
+    description:
+      "Personalausweis abgelaufen oder vergessen? Erfahre, wann ein Ausweis relevant sein kann, welche Stellen du kontaktieren solltest und welche Nachweise helfen.",
+    path: "/personalausweis-abgelaufen"
+  },
+  impressum: {
+    title: "Impressum | PassNotfall",
+    description: "Impressum der Flaaq Holding GmbH für PassNotfall.",
+    path: "/impressum",
+    robots: "noindex,follow"
+  },
+  datenschutz: {
+    title: "Datenschutz | PassNotfall",
+    description: "Datenschutzhinweise von PassNotfall zur Verarbeitung von Formular-, Checkout- und Nutzungsdaten.",
+    path: "/datenschutz",
+    robots: "noindex,follow"
+  },
+  agb: {
+    title: "AGB | PassNotfall",
+    description: "Allgemeine Geschäftsbedingungen für die private digitale Orientierungshilfe PassNotfall.",
+    path: "/agb",
+    robots: "noindex,follow"
+  }
+};
+
+const seoPages: Record<
+  SeoRoute,
+  {
+    kicker: string;
+    title: string;
+    intro: string;
+    sections: Array<{ title: string; body: string; items: string[] }>;
+    faqs: Array<{ question: string; answer: string }>;
+  }
+> = {
+  "reisepass-abgelaufen": {
+    kicker: "Ratgeber",
+    title: "Reisepass abgelaufen vor dem Flug",
+    intro:
+      "Wenn der Reisepass abgelaufen ist, entscheidet vor allem die Kombination aus Zielland, Zeitfenster, Airline-Regel und vorhandenen Ersatznachweisen. Diese Seite sortiert die typischen nächsten Schritte.",
+    sections: [
+      {
+        title: "Kurz vor Abflug",
+        body:
+          "Bei wenigen Stunden bis zum Abflug solltest du nicht zuerst lange recherchieren. Kläre sofort, ob Airline und Zielstaat ein Ersatzdokument akzeptieren können und ob die zuständige Stelle am Flughafen erreichbar ist.",
+        items: [
+          "Airline mit Buchungsnummer kontaktieren und Dokumentproblem klar benennen.",
+          "Flughafen-Stelle oder Bundespolizei anrufen und Zielland, Abflugzeit und vorhandene Unterlagen nennen.",
+          "Alle vorhandenen Pässe, Ausweise, Tickets, Fotos und Nachweise griffbereit halten."
+        ]
+      },
+      {
+        title: "Noch mehr als ein Tag Zeit",
+        body:
+          "Wenn noch ein oder mehrere Tage bleiben, ist die Passbehörde meist der sauberere erste Weg. Ein vorläufiger Reisepass oder ein neuer Ausweis kann je nach Fall hilfreicher sein als eine Lösung direkt am Flughafen.",
+        items: [
+          "Notfalltermin bei Bürgeramt, Bürgerbüro oder Passbehörde anfragen.",
+          "Biometrisches Passfoto, alte Dokumente und Reiseunterlagen vorbereiten.",
+          "Parallel Airline-Regeln und Einreiseanforderungen prüfen."
+        ]
+      },
+      {
+        title: "Typische Risiken",
+        body:
+          "Ein Ersatzdokument ist keine automatische Garantie. Boarding und Einreise können weiterhin scheitern, wenn Airline, Zielland oder Grenzstelle das Dokument nicht akzeptieren.",
+        items: [
+          "Drittstaaten sind oft kritischer als Reisen innerhalb Europas.",
+          "Mindestgültigkeit, Visum und Ticketname müssen zusätzlich passen.",
+          "Bei Kindern können Zustimmung und Nachweise der Sorgeberechtigten nötig sein."
+        ]
+      }
+    ],
+    faqs: [
+      {
+        question: "Kann ich mit abgelaufenem Reisepass fliegen?",
+        answer:
+          "Das ist riskant und hängt vom Ziel, der Airline und den Grenzregeln ab. Verlasse dich nicht auf mündliche Vermutungen und frage Airline sowie zuständige Stelle direkt."
+      },
+      {
+        question: "Hilft ein vorläufiger Reisepass immer?",
+        answer:
+          "Nein. Ein vorläufiger Reisepass kann helfen, wird aber nicht für jedes Ziel und nicht in jeder Situation akzeptiert."
+      },
+      {
+        question: "Was macht PassNotfall?",
+        answer:
+          "PassNotfall erstellt eine private Orientierung mit nächstem Schritt, zuständiger Stelle, Unterlagenliste und Warnhinweisen. Es ist keine Behörde und stellt keine Dokumente aus."
+      }
+    ]
+  },
+  "personalausweis-abgelaufen": {
+    kicker: "Ratgeber",
+    title: "Personalausweis abgelaufen vor Reise oder Flug",
+    intro:
+      "Ein abgelaufener Personalausweis ist nicht immer gleich kritisch, aber vor dem Flug zählt die konkrete Reisesituation. Entscheidend sind Zielland, vorhandene Dokumente, Alter der betroffenen Person und die Airline-Vorgaben.",
+    sections: [
+      {
+        title: "Wenn du innerhalb Europas reist",
+        body:
+          "Für viele europäische Ziele kann ein gültiger Personalausweis relevant sein. Ist er abgelaufen, solltest du prüfen, ob ein Reisepass, vorläufiges Dokument oder eine behördliche Lösung verfügbar ist.",
+        items: [
+          "Zielland und Airline-Vorgaben vor dem Weg zum Flughafen prüfen.",
+          "Gültigen Reisepass nutzen, falls vorhanden und passend zum Ticket.",
+          "Bei knapper Zeit zuständige Flughafen-Stelle telefonisch vorab fragen."
+        ]
+      },
+      {
+        title: "Wenn du nur einen abgelaufenen Ausweis hast",
+        body:
+          "Ohne gültiges Ausweisdokument steigt das Risiko deutlich. Wichtig ist dann, möglichst viele Ersatznachweise mitzunehmen und früh zu klären, welche Stelle überhaupt zuständig ist.",
+        items: [
+          "Abgelaufenen Ausweis trotzdem mitnehmen.",
+          "Führerschein, Geburtsurkunde, Meldebescheinigung, Ticket und Buchungsbestätigung bereithalten.",
+          "Nicht blind zum Schalter laufen, wenn noch telefonische Klärung möglich ist."
+        ]
+      },
+      {
+        title: "Ausweis für Legitimation statt Reise",
+        body:
+          "Wenn der Ausweis für Hotel, Mietwagen, Bank, Behörde oder Vertrag gebraucht wird, ist meist die prüfende Stelle entscheidend. Frage dort konkret, welche Ersatznachweise akzeptiert werden.",
+        items: [
+          "Direkt die Stelle kontaktieren, die deine Identität prüfen will.",
+          "Klären, ob Reisepass, Führerschein oder digitale Nachweise ausreichen.",
+          "Keine Flughafen-Lösung erwarten, wenn es nicht um Grenzübertritt oder Flug geht."
+        ]
+      }
+    ],
+    faqs: [
+      {
+        question: "Reicht ein abgelaufener Personalausweis im Notfall?",
+        answer:
+          "Darauf solltest du dich nicht verlassen. Manche Stellen können abgelaufene Dokumente als Zusatznachweis würdigen, verbindlich ist das aber nicht."
+      },
+      {
+        question: "Was ist besser: Reisepass oder Personalausweis?",
+        answer:
+          "Das hängt vom Ziel ab. Für viele Drittstaaten ist ein Reisepass erforderlich, für manche europäische Ziele kann ein gültiger Personalausweis reichen."
+      },
+      {
+        question: "Wann sollte ich die Passbehörde kontaktieren?",
+        answer:
+          "Sobald mehr als wenige Stunden bleiben, ist ein Notfalltermin bei Bürgeramt oder Passbehörde oft der bessere erste Schritt."
+      }
+    ]
+  }
+};
+
 function getInitialBillingData(): BillingData {
   return {
     firstName: "",
@@ -428,6 +600,14 @@ function trackEvent(eventName: string) {
 }
 
 function getRouteFromPath(pathname: string): Route {
+  if (pathname === "/reisepass-abgelaufen") {
+    return "reisepass-abgelaufen";
+  }
+
+  if (pathname === "/personalausweis-abgelaufen") {
+    return "personalausweis-abgelaufen";
+  }
+
   if (pathname === "/impressum") {
     return "impressum";
   }
@@ -441,6 +621,163 @@ function getRouteFromPath(pathname: string): Route {
   }
 
   return "home";
+}
+
+function isLegalRoute(route: Route): route is LegalRoute {
+  return route === "impressum" || route === "datenschutz" || route === "agb";
+}
+
+function isSeoRoute(route: Route): route is SeoRoute {
+  return route === "reisepass-abgelaufen" || route === "personalausweis-abgelaufen";
+}
+
+function getMetaElement(attribute: "name" | "property", value: string) {
+  let element = document.head.querySelector<HTMLMetaElement>(`meta[${attribute}="${value}"]`);
+
+  if (!element) {
+    element = document.createElement("meta");
+    element.setAttribute(attribute, value);
+    document.head.appendChild(element);
+  }
+
+  return element;
+}
+
+function getLinkElement(rel: string) {
+  let element = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+
+  if (!element) {
+    element = document.createElement("link");
+    element.rel = rel;
+    document.head.appendChild(element);
+  }
+
+  return element;
+}
+
+function createStructuredData(route: Route) {
+  const meta = pageMeta[route];
+  const baseData: unknown[] = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "PassNotfall",
+      url: siteUrl,
+      logo: `${siteUrl}/Logo_Passnotfall.png`,
+      contactPoint: {
+        "@type": "ContactPoint",
+        email: "hilfe@passnotfall.de",
+        contactType: "customer support",
+        areaServed: "DE",
+        availableLanguage: "de"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "PassNotfall",
+      url: siteUrl,
+      inLanguage: "de-DE",
+      description: pageMeta.home.description
+    }
+  ];
+
+  if (route === "home") {
+    baseData.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "Kann die Bundespolizei immer helfen?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Nein. Ersatzdokumente hängen vom Einzelfall, Zielland und der Airline ab."
+          }
+        },
+        {
+          "@type": "Question",
+          name: "Reicht ein Personalausweis?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "In vielen europäischen Ländern kann ein gültiger Personalausweis reichen. Für andere Ziele ist oft ein Reisepass erforderlich."
+          }
+        }
+      ]
+    });
+  }
+
+  if (isSeoRoute(route)) {
+    const page = seoPages[route];
+
+    baseData.push(
+      {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: page.title,
+        description: meta.description,
+        url: `${siteUrl}${meta.path}`,
+        inLanguage: "de-DE",
+        publisher: {
+          "@type": "Organization",
+          name: "PassNotfall",
+          logo: {
+            "@type": "ImageObject",
+            url: `${siteUrl}/Logo_Passnotfall.png`
+          }
+        }
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: page.faqs.map((faq) => ({
+          "@type": "Question",
+          name: faq.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: faq.answer
+          }
+        }))
+      }
+    );
+  }
+
+  return baseData;
+}
+
+function updatePageMeta(route: Route, view: View) {
+  const meta = pageMeta[route];
+  const canonicalUrl = `${siteUrl}${meta.path}`;
+  const shouldNoIndex = view !== "start" || Boolean(meta.robots);
+  const robots = shouldNoIndex ? meta.robots || "noindex,follow" : "index,follow";
+
+  document.documentElement.lang = "de";
+  document.title = meta.title;
+  getMetaElement("name", "description").content = meta.description;
+  getMetaElement("name", "robots").content = robots;
+  getMetaElement("property", "og:type").content = isSeoRoute(route) ? "article" : "website";
+  getMetaElement("property", "og:locale").content = "de_DE";
+  getMetaElement("property", "og:site_name").content = "PassNotfall";
+  getMetaElement("property", "og:title").content = meta.title;
+  getMetaElement("property", "og:description").content = meta.description;
+  getMetaElement("property", "og:url").content = canonicalUrl;
+  getMetaElement("property", "og:image").content = `${siteUrl}/Logo_Passnotfall.png`;
+  getMetaElement("name", "twitter:card").content = "summary_large_image";
+  getMetaElement("name", "twitter:title").content = meta.title;
+  getMetaElement("name", "twitter:description").content = meta.description;
+  getMetaElement("name", "twitter:image").content = `${siteUrl}/Logo_Passnotfall.png`;
+  getLinkElement("canonical").href = canonicalUrl;
+
+  let script = document.getElementById("passnotfall-structured-data") as HTMLScriptElement | null;
+
+  if (!script) {
+    script = document.createElement("script");
+    script.id = "passnotfall-structured-data";
+    script.type = "application/ld+json";
+    document.head.appendChild(script);
+  }
+
+  script.textContent = JSON.stringify(createStructuredData(route));
 }
 
 function getInitialAnswers(): Answers {
@@ -767,7 +1104,7 @@ function CookieBanner() {
   );
 }
 
-function LegalPage({ route }: { route: Exclude<Route, "home"> }) {
+function LegalPage({ route }: { route: LegalRoute }) {
   const content = {
     impressum: {
       kicker: "Impressum",
@@ -974,6 +1311,96 @@ function LegalPage({ route }: { route: Exclude<Route, "home"> }) {
         {content.body}
       </article>
     </section>
+  );
+}
+
+function SeoPage({
+  route,
+  startCheck,
+  navigateTo
+}: {
+  route: SeoRoute;
+  startCheck: () => void;
+  navigateTo: (path: string) => void;
+}) {
+  const page = seoPages[route];
+  const otherRoute: SeoRoute =
+    route === "reisepass-abgelaufen" ? "personalausweis-abgelaufen" : "reisepass-abgelaufen";
+  const otherMeta = pageMeta[otherRoute];
+
+  return (
+    <>
+      <section className="guide-hero">
+        <p className="section-kicker">{page.kicker}</p>
+        <h1>{page.title}</h1>
+        <p>{page.intro}</p>
+        <button className="primary-button" type="button" onClick={startCheck}>
+          Notfallcheck starten
+        </button>
+      </section>
+
+      <section className="guide-section" aria-label="Schnelle Einordnung">
+        <div className="guide-grid">
+          {page.sections.map((section) => (
+            <article key={section.title}>
+              <h2>{section.title}</h2>
+              <p>{section.body}</p>
+              <ul>
+                {section.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="guide-section guide-faq">
+        <p className="section-kicker">Häufige Fragen</p>
+        <h2>Wichtige Antworten für den Notfall</h2>
+        <div className="faq-grid">
+          {page.faqs.map((faq) => (
+            <details key={faq.question} open>
+              <summary>{faq.question}</summary>
+              <p>{faq.answer}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section className="guide-section guide-cta">
+        <div>
+          <p className="section-kicker">Nächster Schritt</p>
+          <h2>Erstelle jetzt deine konkrete Auswertung</h2>
+          <p>
+            Der Ratgeber erklärt die typischen Wege. Der Check verbindet Zielland, Flughafen, Zeitfenster,
+            Dokumentproblem und vorhandene Unterlagen zu einer konkreten Reihenfolge.
+          </p>
+        </div>
+        <button className="primary-button" type="button" onClick={startCheck}>
+          Soforthilfe prüfen
+        </button>
+      </section>
+
+      <section className="more-info-section">
+        <p className="section-kicker">Weiterlesen</p>
+        <h2>Weitere PassNotfall-Hilfen</h2>
+        <div className="info-card-grid">
+          <a href={otherMeta.path} onClick={(event) => { event.preventDefault(); navigateTo(otherMeta.path); }}>
+            <span>{seoPages[otherRoute].title}</span>
+            {otherMeta.description}
+          </a>
+          <a href="/" onClick={(event) => { event.preventDefault(); navigateTo("/"); }}>
+            <span>Notfallcheck</span>
+            Starte die digitale Auswertung für deinen konkreten Fall.
+          </a>
+          <a href="/#faq">
+            <span>Hinweise und FAQ</span>
+            Lies die wichtigsten Grenzen und Warnhinweise zur privaten Orientierungshilfe.
+          </a>
+        </div>
+      </section>
+    </>
   );
 }
 
@@ -1284,6 +1711,10 @@ function App() {
   useEffect(() => {
     setActiveStep((step) => Math.min(step, visibleFormSteps.length - 1));
   }, [visibleFormSteps.length]);
+
+  useEffect(() => {
+    updatePageMeta(route, view);
+  }, [route, view]);
 
   useEffect(() => {
     function handlePopState() {
@@ -1808,6 +2239,12 @@ function App() {
             <a href="/" onClick={(event) => { event.preventDefault(); navigateTo("/"); }}>
               Startseite
             </a>
+            <a href="/reisepass-abgelaufen" onClick={(event) => { event.preventDefault(); navigateTo("/reisepass-abgelaufen"); }}>
+              Reisepass abgelaufen
+            </a>
+            <a href="/personalausweis-abgelaufen" onClick={(event) => { event.preventDefault(); navigateTo("/personalausweis-abgelaufen"); }}>
+              Personalausweis abgelaufen
+            </a>
             <button type="button" onClick={startCheck}>Check starten</button>
             <a href="/impressum" onClick={(event) => { event.preventDefault(); navigateTo("/impressum"); }}>
               Impressum
@@ -1825,7 +2262,8 @@ function App() {
         </header>
 
         <main>
-          <LegalPage route={route} />
+          {isLegalRoute(route) && <LegalPage route={route} />}
+          {isSeoRoute(route) && <SeoPage route={route} startCheck={startCheck} navigateTo={navigateTo} />}
         </main>
 
         <footer className="site-footer">
@@ -1835,6 +2273,12 @@ function App() {
           </div>
           <div className="footer-links">
             <button type="button" onClick={startCheck}>Notfallcheck starten</button>
+            <a href="/reisepass-abgelaufen" onClick={(event) => { event.preventDefault(); navigateTo("/reisepass-abgelaufen"); }}>
+              Reisepass abgelaufen
+            </a>
+            <a href="/personalausweis-abgelaufen" onClick={(event) => { event.preventDefault(); navigateTo("/personalausweis-abgelaufen"); }}>
+              Personalausweis abgelaufen
+            </a>
             <a href="/impressum" onClick={(event) => { event.preventDefault(); navigateTo("/impressum"); }}>
               Impressum
             </a>
@@ -1860,6 +2304,12 @@ function App() {
         <nav className="desktop-nav" aria-label="Hauptnavigation">
           <a href="#check">Check</a>
           <a href="#ablauf">Ablauf</a>
+          <a href="/reisepass-abgelaufen" onClick={(event) => { event.preventDefault(); navigateTo("/reisepass-abgelaufen"); }}>
+            Reisepass
+          </a>
+          <a href="/personalausweis-abgelaufen" onClick={(event) => { event.preventDefault(); navigateTo("/personalausweis-abgelaufen"); }}>
+            Ausweis
+          </a>
           <a href="#faq">Hinweise</a>
         </nav>
         <button className="header-cta" type="button" onClick={startCheck}>
@@ -2009,18 +2459,53 @@ function App() {
             <div>
               <span>1</span>
               <h3>Fragen beantworten</h3>
-              <p>Der Kunde gibt Standort, Flughafen, Zielland, Zeitfenster und Dokumentproblem ein.</p>
+              <p>Du gibst Standort, Flughafen, Zielland, Zeitfenster und Dokumentproblem ein.</p>
             </div>
             <div>
               <span>2</span>
               <h3>Formular abschicken</h3>
-              <p>Nach dem letzten Schritt lädt die Auswertung. Der Kunde sieht, dass der Notfallplan erstellt wird.</p>
+              <p>Nach dem letzten Schritt lädt die Auswertung. Du siehst, dass der Notfallplan erstellt wird.</p>
             </div>
             <div>
               <span>3</span>
               <h3>Ergebnis-Seite nutzen</h3>
               <p>Oben steht direkt, was als Nächstes zu tun ist. Darunter folgen Stelle, Telefonnummer, Unterlagen und Warnhinweise.</p>
             </div>
+          </div>
+        </section>
+
+        <section className="topic-section" aria-labelledby="situationen-heading">
+          <p className="section-kicker">Typische Situationen</p>
+          <h2 id="situationen-heading">Passproblem kurz vor Abflug richtig einordnen</h2>
+          <div className="topic-grid">
+            <article>
+              <h3>Reisepass abgelaufen</h3>
+              <p>
+                Wenn dein Reisepass abgelaufen ist, zählt zuerst das Zielland. Für viele Drittstaaten brauchst du
+                einen gültigen Reisepass oder ein akzeptiertes Ersatzdokument.
+              </p>
+              <a href="/reisepass-abgelaufen" onClick={(event) => { event.preventDefault(); navigateTo("/reisepass-abgelaufen"); }}>
+                Ratgeber lesen
+              </a>
+            </article>
+            <article>
+              <h3>Personalausweis abgelaufen</h3>
+              <p>
+                Ein abgelaufener Ausweis kann für Reise, Hotel, Mietwagen oder Legitimation problematisch werden.
+                Entscheidend ist, welche Stelle den Nachweis akzeptieren muss.
+              </p>
+              <a href="/personalausweis-abgelaufen" onClick={(event) => { event.preventDefault(); navigateTo("/personalausweis-abgelaufen"); }}>
+                Ratgeber lesen
+              </a>
+            </article>
+            <article>
+              <h3>Dokument vergessen oder verloren</h3>
+              <p>
+                Ohne gültiges Dokument brauchst du eine klare Reihenfolge: vorhandene Nachweise sammeln, Airline
+                informieren und zuständige Stelle vorab kontaktieren.
+              </p>
+              <button type="button" onClick={startCheck}>Fall prüfen</button>
+            </article>
           </div>
         </section>
 
@@ -2038,6 +2523,54 @@ function App() {
               Staatsangehörigkeit, dem Zeitfenster und den vorhandenen Unterlagen ab. Der Check zeigt dir, ob der
               Weg eher über Airline, Flughafen-Stelle oder Passbehörde laufen sollte.
             </p>
+            <p>
+              Bei Kindern, Namensabweichungen, beschädigten Dokumenten oder verlorenem Pass kann dieselbe Reise
+              ganz anders bewertet werden. Deshalb fragt PassNotfall betroffene Personen und konkrete
+              Dokumentprobleme getrennt ab.
+            </p>
+            <p>
+              Die Auswertung nennt keine amtliche Garantie. Sie hilft dir, die nächsten Telefonate und Wege zu
+              priorisieren, damit du nicht wertvolle Zeit mit der falschen Stelle verlierst.
+            </p>
+          </div>
+        </section>
+
+        <section className="airport-section" aria-labelledby="airports-heading">
+          <div>
+            <p className="section-kicker">Flughäfen</p>
+            <h2 id="airports-heading">Deutschlandweite Orientierung für wichtige Abflughäfen</h2>
+            <p>
+              Der Check enthält große deutsche Flughäfen und zeigt dir die passende Stelle aus deinen Angaben.
+              Adressen und Telefonnummern werden direkt in der Ergebnis-Seite angezeigt.
+            </p>
+          </div>
+          <div className="airport-list" aria-label="Unterstützte Flughäfen">
+            {airports.slice(0, 12).map((airport) => (
+              <span key={airport.name}>{airport.name}</span>
+            ))}
+          </div>
+        </section>
+
+        <section className="document-section" aria-labelledby="documents-heading">
+          <p className="section-kicker">Unterlagen</p>
+          <h2 id="documents-heading">Was du im Notfall bereithalten solltest</h2>
+          <div className="document-grid">
+            <article>
+              <h3>Reisedaten</h3>
+              <p>Ticket, Buchungsbestätigung, Flugnummer, Ziel, Umstieg und Abflugzeit helfen bei der schnellen Einordnung.</p>
+            </article>
+            <article>
+              <h3>Identitätsnachweise</h3>
+              <p>Alle vorhandenen Reisepässe, Personalausweise, Führerschein, Geburtsurkunde oder Meldebescheinigung mitnehmen.</p>
+            </article>
+            <article>
+              <h3>Für Kinder</h3>
+              <p>Zusätzlich Geburtsurkunde, Ausweise der Sorgeberechtigten und Zustimmungserklärung prüfen und einpacken.</p>
+            </article>
+            <article>
+              <h3>Für Behördenwege</h3>
+              <p>Biometrisches Passfoto, Zahlungsmittel und Nachweise zur Dringlichkeit vorbereiten.</p>
+            </article>
           </div>
         </section>
 
@@ -2061,7 +2594,24 @@ function App() {
               <summary>Ist die Auswertung verbindlich?</summary>
               <p>Nein. Kritische Fälle müssen immer bei Airline, Behörde, Bundespolizei oder Konsulat bestätigt werden.</p>
             </details>
+            <details>
+              <summary>Was passiert nach dem Formular?</summary>
+              <p>Du erhältst eine strukturierte Ergebnis-Seite mit nächstem Schritt, zuständiger Stelle, Unterlagen und Warnhinweisen.</p>
+            </details>
+            <details>
+              <summary>Warum wird das Zielland abgefragt?</summary>
+              <p>Weil Reisedokumente je nach Ziel unterschiedlich bewertet werden können. Ein Ausweis kann für ein Ziel reichen und für ein anderes nicht.</p>
+            </details>
           </div>
+        </section>
+
+        <section className="disclaimer-section">
+          <h2>Wichtiger Hinweis zur Einordnung</h2>
+          <p>
+            PassNotfall ist eine private Orientierungshilfe. Die Seite ersetzt keine amtliche Auskunft und stellt
+            keine Reisepässe, Personalausweise, Visa oder Ersatzdokumente aus. Verbindlich entscheiden Airline,
+            Behörden, Bundespolizei, Grenzpolizei, Konsulate oder Grenzstellen.
+          </p>
         </section>
 
       </main>
@@ -2074,6 +2624,12 @@ function App() {
         <div className="footer-links">
           <button type="button" onClick={startCheck}>Notfallcheck starten</button>
           <a href="#faq">Hinweise</a>
+          <a href="/reisepass-abgelaufen" onClick={(event) => { event.preventDefault(); navigateTo("/reisepass-abgelaufen"); }}>
+            Reisepass abgelaufen
+          </a>
+          <a href="/personalausweis-abgelaufen" onClick={(event) => { event.preventDefault(); navigateTo("/personalausweis-abgelaufen"); }}>
+            Personalausweis abgelaufen
+          </a>
           <a href="/impressum" onClick={(event) => { event.preventDefault(); navigateTo("/impressum"); }}>
             Impressum
           </a>
