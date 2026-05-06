@@ -2163,6 +2163,15 @@ details p {
     font-size: 0.88rem;
   }
 
+  .site-header.compact .header-cta {
+    min-height: 2.25rem;
+    padding: 0 0.65rem;
+    border-radius: 0.55rem;
+    font-size: 0.74rem;
+    line-height: 1.05;
+    box-shadow: 0 8px 20px rgba(215, 38, 46, 0.2);
+  }
+
   .hero-section,
   .checker-section,
   .problem-section,
