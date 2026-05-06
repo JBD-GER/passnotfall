@@ -60,6 +60,7 @@ type VerifiedCheckoutSession = {
   status: string;
   payment_status: string;
   amount_total?: number;
+  currency?: string;
   customer_email?: string;
   reference?: string;
   case_id?: string;
@@ -70,6 +71,12 @@ type VerifiedCheckoutSession = {
     invoice_pdf?: string;
     status?: string;
   } | null;
+};
+
+type PurchaseConversion = {
+  transactionId: string;
+  value: number;
+  currency: string;
 };
 
 type StoredCase = {
@@ -685,6 +692,15 @@ function trackEvent(eventName: string) {
   window.gtag?.("event", eventName, {
     event_category: "passnotfall",
     non_interaction: false
+  });
+}
+
+function trackGoogleAdsPurchaseConversion(conversion: PurchaseConversion) {
+  window.gtag?.("event", "conversion", {
+    send_to: "AW-18143863567/m42KCJOXragcEI_G1ctD",
+    value: conversion.value,
+    currency: conversion.currency.toUpperCase(),
+    transaction_id: conversion.transactionId
   });
 }
 
@@ -1963,6 +1979,7 @@ function App() {
   const [storedCaseError, setStoredCaseError] = useState("");
   const [isStoredCaseLoading, setIsStoredCaseLoading] = useState(false);
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
+  const [purchaseConversion, setPurchaseConversion] = useState<PurchaseConversion | null>(null);
   const visibleFormSteps = useMemo(
     () => formSteps.filter((step) => !("shouldShow" in step) || !step.shouldShow || step.shouldShow(answers)),
     [answers]
@@ -2029,6 +2046,15 @@ function App() {
 
     sendConfirmationEmail();
   }, [view, confirmationStatus]);
+
+  useEffect(() => {
+    if (view !== "result" || !purchaseConversion) {
+      return;
+    }
+
+    trackGoogleAdsPurchaseConversion(purchaseConversion);
+    setPurchaseConversion(null);
+  }, [view, purchaseConversion]);
 
   function navigateTo(path: string) {
     window.history.pushState({}, "", path);
@@ -2246,6 +2272,11 @@ function App() {
       setCaseAccessUrl(pendingCheckout.accessToken ? `${window.location.origin}/fall/${pendingCheckout.accessToken}` : "");
       clearPendingCheckout();
       trackEvent("stripe_checkout_paid");
+      setPurchaseConversion({
+        transactionId: verifiedSession.id,
+        value: typeof verifiedSession.amount_total === "number" ? verifiedSession.amount_total / 100 : 49,
+        currency: verifiedSession.currency || "EUR"
+      });
       await submitForm(pendingCheckout.answers);
     } catch {
       setView("checkout");
