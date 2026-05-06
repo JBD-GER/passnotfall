@@ -57,6 +57,7 @@ type VerifiedCheckoutSession = {
   id: string;
   status: string;
   payment_status: string;
+  amount_total?: number;
   customer_email?: string;
   reference?: string;
   invoice?: {
@@ -1968,7 +1969,11 @@ function App() {
       const response = await fetch(`/api/verify-checkout-session?session_id=${encodeURIComponent(sessionId)}`);
       const verifiedSession = (await response.json()) as VerifiedCheckoutSession;
 
-      if (!response.ok || verifiedSession.payment_status !== "paid") {
+      const isPaid = verifiedSession.payment_status === "paid";
+      const isFreeCheckout =
+        verifiedSession.payment_status === "no_payment_required" && verifiedSession.amount_total === 0;
+
+      if (!response.ok || (!isPaid && !isFreeCheckout)) {
         throw new Error("Stripe-Zahlung ist nicht bezahlt.");
       }
 

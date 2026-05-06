@@ -175,6 +175,7 @@ export async function createCheckoutSessionHandler(req: any, res: any, env: Env 
     params.append("billing_address_collection", "required");
     params.append("phone_number_collection[enabled]", "true");
     params.append("tax_id_collection[enabled]", "true");
+    params.append("allow_promotion_codes", env.STRIPE_ALLOW_PROMOTION_CODES === "true" ? "true" : "false");
     params.append("customer_update[name]", "auto");
     params.append("customer_update[address]", "auto");
     params.append("submit_type", "pay");
