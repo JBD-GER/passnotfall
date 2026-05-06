@@ -89,11 +89,11 @@ function getSafeErrorMessage(error: unknown) {
 }
 
 function getPaymentMethodTypes(env: Env) {
-  if (env.STRIPE_DYNAMIC_PAYMENT_METHODS === "true") {
+  if (env.STRIPE_DYNAMIC_PAYMENT_METHODS !== "false") {
     return [];
   }
 
-  return String(env.STRIPE_PAYMENT_METHOD_TYPES || "card")
+  return String(env.STRIPE_PAYMENT_METHOD_TYPES || "")
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
