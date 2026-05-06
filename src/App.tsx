@@ -45,6 +45,29 @@ type CheckoutConsent = {
   digitalWaiver: boolean;
 };
 
+type PendingCheckout = {
+  reference: string;
+  answers: Answers;
+  billingData: BillingData;
+  createdAt: number;
+  sessionId?: string;
+};
+
+type VerifiedCheckoutSession = {
+  id: string;
+  status: string;
+  payment_status: string;
+  customer_email?: string;
+  reference?: string;
+  invoice?: {
+    id: string;
+    number?: string;
+    hosted_invoice_url?: string;
+    invoice_pdf?: string;
+    status?: string;
+  } | null;
+};
+
 type SingleAnswerKey = Exclude<keyof Answers, "documents" | "affectedPersons">;
 
 type ChoiceStep = {
@@ -398,6 +421,8 @@ const defaultConsent: ConsentSettings = {
   marketing: false
 };
 
+const pendingCheckoutStorageKey = "passnotfall_pending_checkout";
+
 const legalHighlights = [
   "+25 tägliche Hilfen",
   "+2.500 Kunden unterstützt",
@@ -579,6 +604,27 @@ function getInitialBillingData(): BillingData {
     city: "",
     country: "Deutschland"
   };
+}
+
+function createCheckoutReference() {
+  return `PN-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+}
+
+function readPendingCheckout(): PendingCheckout | null {
+  try {
+    const stored = localStorage.getItem(pendingCheckoutStorageKey);
+    return stored ? (JSON.parse(stored) as PendingCheckout) : null;
+  } catch {
+    return null;
+  }
+}
+
+function savePendingCheckout(pendingCheckout: PendingCheckout) {
+  localStorage.setItem(pendingCheckoutStorageKey, JSON.stringify(pendingCheckout));
+}
+
+function clearPendingCheckout() {
+  localStorage.removeItem(pendingCheckoutStorageKey);
 }
 
 function updateGoogleConsent(consent: ConsentSettings) {
@@ -1698,6 +1744,9 @@ function App() {
     digitalWaiver: false
   });
   const [checkoutError, setCheckoutError] = useState("");
+  const [isRedirectingToStripe, setIsRedirectingToStripe] = useState(false);
+  const [stripeInvoiceUrl, setStripeInvoiceUrl] = useState("");
+  const [stripeInvoiceNumber, setStripeInvoiceNumber] = useState("");
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
   const visibleFormSteps = useMemo(
     () => formSteps.filter((step) => !("shouldShow" in step) || !step.shouldShow || step.shouldShow(answers)),
@@ -1724,6 +1773,30 @@ function App() {
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const checkout = params.get("checkout");
+    const sessionId = params.get("session_id");
+
+    if (checkout === "success" && sessionId) {
+      completeStripeCheckout(sessionId);
+      return;
+    }
+
+    if (checkout === "cancel") {
+      const pendingCheckout = readPendingCheckout();
+
+      if (pendingCheckout) {
+        setAnswers(pendingCheckout.answers);
+        setBillingData(pendingCheckout.billingData);
+      }
+
+      window.history.replaceState({}, "", "/");
+      setView("checkout");
+      setCheckoutError("Zahlung wurde abgebrochen. Deine Rechnungsdaten bleiben im Formular erhalten.");
+    }
   }, []);
 
   useEffect(() => {
@@ -1838,18 +1911,19 @@ function App() {
     window.setTimeout(() => document.getElementById("check")?.scrollIntoView({ behavior: "smooth" }), 0);
   }
 
-  async function submitForm() {
+  async function submitForm(nextAnswers: Answers = answers) {
     trackEvent("notfallcheck_form_submit");
     setView("loading");
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     const startedAt = Date.now();
+    const nextLocalAssessment = createAssessment(nextAnswers);
 
     try {
       const response = await fetch("/api/assessment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers, localAssessment })
+        body: JSON.stringify({ answers: nextAnswers, localAssessment: nextLocalAssessment })
       });
 
       if (response.ok) {
@@ -1873,13 +1947,56 @@ function App() {
     }, Math.max(0, 1100 - (Date.now() - startedAt)));
   }
 
+  async function completeStripeCheckout(sessionId: string) {
+    const pendingCheckout = readPendingCheckout();
+
+    window.history.replaceState({}, "", "/");
+    setRoute("home");
+    setCheckoutError("");
+    setView("loading");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    if (!pendingCheckout) {
+      setView("checkout");
+      setCheckoutError(
+        "Zahlung wurde gefunden, aber die lokalen Formularangaben fehlen. Bitte starte den Check auf diesem Gerät erneut oder kontaktiere den Support mit deiner Stripe-Zahlung."
+      );
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/verify-checkout-session?session_id=${encodeURIComponent(sessionId)}`);
+      const verifiedSession = (await response.json()) as VerifiedCheckoutSession;
+
+      if (!response.ok || verifiedSession.payment_status !== "paid") {
+        throw new Error("Stripe-Zahlung ist nicht bezahlt.");
+      }
+
+      if (verifiedSession.reference && verifiedSession.reference !== pendingCheckout.reference) {
+        throw new Error("Stripe-Referenz passt nicht zu diesem Checkout.");
+      }
+
+      setAnswers(pendingCheckout.answers);
+      setBillingData(pendingCheckout.billingData);
+      setStripeInvoiceUrl(verifiedSession.invoice?.hosted_invoice_url || verifiedSession.invoice?.invoice_pdf || "");
+      setStripeInvoiceNumber(verifiedSession.invoice?.number || "");
+      clearPendingCheckout();
+      trackEvent("stripe_checkout_paid");
+      await submitForm(pendingCheckout.answers);
+    } catch {
+      setView("checkout");
+      setCheckoutError("Die Stripe-Zahlung konnte nicht bestätigt werden. Bitte prüfe die Zahlung oder versuche es erneut.");
+    }
+  }
+
   function openCheckout() {
     setCheckoutError("");
+    setIsRedirectingToStripe(false);
     setView("checkout");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function submitCheckout(event: FormEvent<HTMLFormElement>) {
+  async function submitCheckout(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const requiredFields: Array<keyof BillingData> = ["firstName", "lastName", "street", "zip", "city", "country"];
     const missingField = requiredFields.some((field) => !billingData[field].trim());
@@ -1899,7 +2016,44 @@ function App() {
       return;
     }
 
-    submitForm();
+    const reference = createCheckoutReference();
+    const pendingCheckout: PendingCheckout = {
+      reference,
+      answers,
+      billingData,
+      createdAt: Date.now()
+    };
+
+    setIsRedirectingToStripe(true);
+    setCheckoutError("");
+    savePendingCheckout(pendingCheckout);
+
+    try {
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: answers.customerEmail.trim(),
+          billingData,
+          answers,
+          reference
+        })
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.url || !data?.id) {
+        throw new Error(data?.error || "Stripe Checkout konnte nicht gestartet werden.");
+      }
+
+      savePendingCheckout({ ...pendingCheckout, sessionId: data.id });
+      trackEvent("stripe_checkout_started");
+      window.location.assign(data.url);
+    } catch {
+      setIsRedirectingToStripe(false);
+      setCheckoutError(
+        "Stripe Checkout konnte gerade nicht gestartet werden. Bitte prüfe STRIPE_SECRET_KEY, Live-Modus und Stripe-Konfiguration."
+      );
+    }
   }
 
   function goToNextStep() {
@@ -2011,6 +2165,14 @@ function App() {
                 <strong>49 EUR</strong>
                 <small>inkl. MwSt.</small>
               </div>
+              <div className="stripe-methods-note">
+                <strong>Live-Zahlung über Stripe</strong>
+                <span>
+                  Im nächsten Schritt zeigt Stripe alle für dein Land, Gerät und die Währung verfügbaren sowie im
+                  Stripe-Dashboard aktivierten Zahlungsarten an. Die Rechnung wird nach erfolgreicher Zahlung über
+                  Stripe erstellt.
+                </span>
+              </div>
             </div>
 
             <form className="checkout-form" onSubmit={submitCheckout}>
@@ -2100,10 +2262,13 @@ function App() {
 
               {checkoutError && <p className="checkout-error">{checkoutError}</p>}
 
-              <button className="primary-button full" type="submit">
-                Kostenpflichtig auswerten
+              <button className="primary-button full" type="submit" disabled={isRedirectingToStripe}>
+                {isRedirectingToStripe ? "Weiterleitung zu Stripe..." : "Jetzt zahlungspflichtig zu Stripe"}
               </button>
-              <small className="checkout-note">Private Orientierungshilfe. Keine Behörde und kein amtliches Dokument.</small>
+              <small className="checkout-note">
+                Private Orientierungshilfe. Keine Behörde und kein amtliches Dokument. Zahlung, Zahlungsarten und
+                Rechnung laufen über Stripe.
+              </small>
             </form>
           </section>
         </main>
@@ -2172,6 +2337,19 @@ function App() {
               <p>
                 {confirmationMessage}
                 {confirmationReference ? ` Referenz: ${confirmationReference}` : ""}
+              </p>
+            </section>
+          )}
+
+          {stripeInvoiceUrl && (
+            <section className="email-status-panel sent">
+              <p className="section-kicker">Stripe Rechnung</p>
+              <h2>{stripeInvoiceNumber ? `Rechnung ${stripeInvoiceNumber}` : "Rechnung wurde erstellt"}</h2>
+              <p>
+                Die Rechnung wurde nach der erfolgreichen Zahlung über Stripe erstellt.{" "}
+                <a href={stripeInvoiceUrl} target="_blank" rel="noreferrer">
+                  Rechnung öffnen
+                </a>
               </p>
             </section>
           )}

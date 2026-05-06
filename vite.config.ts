@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { createCheckoutSessionHandler, verifyCheckoutSessionHandler } from "./server/stripe";
 
 type ConfirmationPayload = {
   email?: string;
@@ -264,6 +265,14 @@ export default defineConfig(({ mode }) => {
       {
         name: "passnotfall-openai-api",
         configureServer(server) {
+          server.middlewares.use("/api/create-checkout-session", async (req: any, res: any) => {
+            await createCheckoutSessionHandler(req, res, env);
+          });
+
+          server.middlewares.use("/api/verify-checkout-session", async (req: any, res: any) => {
+            await verifyCheckoutSessionHandler(req, res, env);
+          });
+
           server.middlewares.use("/api/assessment", async (req: any, res: any) => {
             if (req.method !== "POST") {
               sendJson(res, 405, { error: "Method not allowed" });
