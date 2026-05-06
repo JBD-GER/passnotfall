@@ -634,6 +634,10 @@ function getCheckoutErrorMessage(error: unknown) {
     : "Stripe Checkout konnte gerade nicht gestartet werden. Bitte prüfe STRIPE_SECRET_KEY, Live-Modus und Stripe-Konfiguration.";
 }
 
+function isValidEmailAddress(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
 function updateGoogleConsent(consent: ConsentSettings) {
   window.gtag?.("consent", "update", {
     analytics_storage: consent.statistics ? "granted" : "denied",
@@ -1751,6 +1755,7 @@ function App() {
     digitalWaiver: false
   });
   const [checkoutError, setCheckoutError] = useState("");
+  const [formStepError, setFormStepError] = useState("");
   const [isRedirectingToStripe, setIsRedirectingToStripe] = useState(false);
   const [stripeInvoiceUrl, setStripeInvoiceUrl] = useState("");
   const [stripeInvoiceNumber, setStripeInvoiceNumber] = useState("");
@@ -1823,6 +1828,7 @@ function App() {
 
   function updateAnswer(key: SingleAnswerKey, value: string) {
     setAiAssessment(null);
+    setFormStepError("");
     setAnswers((current) => ({
       ...current,
       [key]: value
@@ -2067,6 +2073,13 @@ function App() {
   }
 
   function goToNextStep() {
+    if (currentStep.type === "email" && !isValidEmailAddress(answers.customerEmail)) {
+      setFormStepError("Bitte gib eine gültige E-Mail-Adresse ein, damit wir die PDF-Bestätigung senden können.");
+      return;
+    }
+
+    setFormStepError("");
+
     if (activeStep === visibleFormSteps.length - 1) {
       openCheckout();
       return;
@@ -2601,6 +2614,9 @@ function App() {
                   <span>E-Mail-Adresse</span>
                   <input
                     type="email"
+                    required
+                    aria-invalid={Boolean(formStepError)}
+                    aria-describedby={formStepError ? "email-step-error" : undefined}
                     value={answers.customerEmail}
                     onChange={(event) => updateAnswer("customerEmail", event.target.value)}
                     placeholder="name@example.de"
@@ -2613,6 +2629,12 @@ function App() {
                 </label>
               )}
             </div>
+
+            {formStepError && (
+              <p className="form-step-error" id="email-step-error">
+                {formStepError}
+              </p>
+            )}
 
             <div className="step-actions">
               <button type="button" className="secondary-button small" onClick={goToPreviousStep} disabled={activeStep === 0}>
