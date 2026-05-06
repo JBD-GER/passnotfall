@@ -1,8 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { readJsonBody, sendJson } from "./stripe";
-import { updateCaseByToken } from "./supabase";
+import { readJsonBody, sendJson } from "./stripe.js";
+import { updateCaseByToken } from "./supabase.js";
 
 type Env = Record<string, string | undefined>;
 

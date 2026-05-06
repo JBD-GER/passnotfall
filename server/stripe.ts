@@ -1,4 +1,4 @@
-import { createPassnotfallCase, updateCaseById } from "./supabase";
+import { createPassnotfallCase, updateCaseById } from "./supabase.js";
 
 type BillingData = {
   firstName?: string;

@@ -3,9 +3,9 @@ import react from "@vitejs/plugin-react";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { assessmentHandler } from "./server/assessment";
-import { sendConfirmationHandler } from "./server/confirmation";
-import { createCheckoutSessionHandler, verifyCheckoutSessionHandler } from "./server/stripe";
+import { assessmentHandler } from "./server/assessment.js";
+import { sendConfirmationHandler } from "./server/confirmation.js";
+import { createCheckoutSessionHandler, verifyCheckoutSessionHandler } from "./server/stripe.js";
 
 type ConfirmationPayload = {
   email?: string;

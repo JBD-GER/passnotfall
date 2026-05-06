@@ -1,5 +1,5 @@
-import { getCaseByToken } from "../server/supabase";
-import { sendJson } from "../server/stripe";
+import { getCaseByToken } from "../server/supabase.js";
+import { sendJson } from "../server/stripe.js";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "GET") {

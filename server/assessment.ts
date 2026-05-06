@@ -1,4 +1,4 @@
-import { readJsonBody, sendJson } from "./stripe";
+import { readJsonBody, sendJson } from "./stripe.js";
 
 type Env = Record<string, string | undefined>;
 
