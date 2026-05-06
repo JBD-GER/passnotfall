@@ -202,7 +202,9 @@ export async function createCheckoutSessionHandler(req: any, res: any, env: Env 
     params.append("payment_intent_data[metadata][passnotfall_reference]", reference);
     params.append("payment_intent_data[metadata][email]", email);
 
-    if (env.STRIPE_AUTOMATIC_TAX === "true") {
+    if (env.STRIPE_TAX_RATE_ID) {
+      params.append("line_items[0][tax_rates][0]", env.STRIPE_TAX_RATE_ID);
+    } else if (env.STRIPE_AUTOMATIC_TAX === "true") {
       params.append("automatic_tax[enabled]", "true");
     }
 
