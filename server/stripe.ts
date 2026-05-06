@@ -32,7 +32,7 @@ export function readJsonBody(req: any): Promise<unknown> {
 
     req.on("end", () => {
       try {
-        resolve(body ? JSON.parse(body) : {});
+        resolve(body ? JSON.parse(body.replace(/^\uFEFF/, "")) : {});
       } catch (error) {
         reject(error);
       }
@@ -80,6 +80,21 @@ function toCountryCode(country: string | undefined) {
 
 function limitMetadata(value: unknown) {
   return String(value || "").slice(0, 500);
+}
+
+function getSafeErrorMessage(error: unknown) {
+  return error instanceof Error && error.message ? error.message : "Unknown server error";
+}
+
+function getPaymentMethodTypes(env: Env) {
+  if (env.STRIPE_DYNAMIC_PAYMENT_METHODS === "true") {
+    return [];
+  }
+
+  return String(env.STRIPE_PAYMENT_METHOD_TYPES || "card")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 async function stripeRequest(env: Env, path: string, params?: URLSearchParams, method = "POST") {
@@ -203,6 +218,10 @@ export async function createCheckoutSessionHandler(req: any, res: any, env: Env 
     params.append("payment_intent_data[metadata][passnotfall_reference]", reference);
     params.append("payment_intent_data[metadata][email]", email);
 
+    getPaymentMethodTypes(env).forEach((paymentMethodType, index) => {
+      params.append(`payment_method_types[${index}]`, paymentMethodType);
+    });
+
     if (env.STRIPE_TAX_RATE_ID) {
       params.append("line_items[0][tax_rates][0]", env.STRIPE_TAX_RATE_ID);
     } else if (env.STRIPE_AUTOMATIC_TAX === "true") {
@@ -220,8 +239,8 @@ export async function createCheckoutSessionHandler(req: any, res: any, env: Env 
       id: sessionResponse.data.id,
       url: sessionResponse.data.url
     });
-  } catch {
-    sendJson(res, 500, { error: "Checkout session failed" });
+  } catch (error) {
+    sendJson(res, 500, { error: "Checkout session failed", details: { message: getSafeErrorMessage(error) } });
   }
 }
 
@@ -272,7 +291,7 @@ export async function verifyCheckoutSessionHandler(req: any, res: any, env: Env 
           }
         : null
     });
-  } catch {
-    sendJson(res, 500, { error: "Checkout verification failed" });
+  } catch (error) {
+    sendJson(res, 500, { error: "Checkout verification failed", details: { message: getSafeErrorMessage(error) } });
   }
 }
