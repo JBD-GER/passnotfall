@@ -1548,11 +1548,20 @@ function StoredCasePage({
           <span>Risiko</span>
           <strong>{storedAssessment.risk}</strong>
         </div>
+        <ResultSummaryBar answers={storedAnswers} risk={storedAssessment.risk} reference={storedCase.reference} />
       </section>
 
       <section className="now-panel">
         <p className="section-kicker">Jetzt sofort machen</p>
         <h2>{storedAssessment.primaryAction}</h2>
+        <div className="now-actions">
+          <a className="primary-button small" href={`tel:${storedAssessment.airport.phone.replace(/[^\d+]/g, "")}`}>
+            Stelle anrufen
+          </a>
+          <button className="secondary-button small" type="button" onClick={startCheck}>
+            Neuen Check starten
+          </button>
+        </div>
         <ol className="action-list">
           {storedAssessment.steps.map((step) => (
             <li key={step}>{step}</li>
@@ -1628,6 +1637,38 @@ type ResultAnswerEditorProps = {
   updateAffectedPerson: (id: string, key: keyof Omit<AffectedPerson, "id">, value: string) => void;
   toggleDocument: (document: string) => void;
 };
+
+function ResultSummaryBar({
+  answers,
+  risk,
+  reference
+}: {
+  answers: Answers;
+  risk: string;
+  reference?: string;
+}) {
+  const items = [
+    { label: "Risiko", value: risk },
+    { label: "Abflug", value: answers.airport },
+    { label: "Ziel", value: answers.destination },
+    { label: "Zeitfenster", value: answers.time }
+  ];
+
+  if (reference) {
+    items.push({ label: "Referenz", value: reference });
+  }
+
+  return (
+    <div className="result-summary-strip" aria-label="Kurzuebersicht der Auswertung">
+      {items.map((item) => (
+        <span key={item.label}>
+          <strong>{item.label}</strong>
+          {item.value}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 type AffectedPeopleEditorProps = {
   people: AffectedPerson[];
@@ -2538,11 +2579,20 @@ function App() {
               <span>Risiko</span>
               <strong>{assessment.risk}</strong>
             </div>
+            <ResultSummaryBar answers={answers} risk={assessment.risk} />
           </section>
 
           <section className="now-panel">
             <p className="section-kicker">Jetzt sofort machen</p>
             <h2>{assessment.primaryAction}</h2>
+            <div className="now-actions">
+              <a className="primary-button small" href={`tel:${assessment.airport.phone.replace(/[^\d+]/g, "")}`}>
+                Stelle anrufen
+              </a>
+              <button className="secondary-button small" type="button" onClick={scrollToResultEditor}>
+                Angaben prüfen
+              </button>
+            </div>
             <ol className="action-list">
               {assessment.steps.map((step) => (
                 <li key={step}>{step}</li>

@@ -1518,6 +1518,38 @@ details p {
   background: var(--blue);
 }
 
+.result-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  width: min(100%, 900px);
+  margin-top: 0.35rem;
+  padding-right: min(250px, 30vw);
+}
+
+.result-summary-strip span {
+  min-width: 0;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.78);
+  color: #26384e;
+  font-weight: 900;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-summary-strip strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--blue);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .now-panel,
 .person-result-panel,
 .email-status-panel,
@@ -1545,9 +1577,16 @@ details p {
 
 .now-panel h2 {
   max-width: 980px;
-  margin-bottom: clamp(1.1rem, 3vw, 1.5rem);
-  font-size: clamp(1.75rem, 3.6vw, 2.85rem);
+  margin-bottom: 0.95rem;
+  font-size: clamp(1.55rem, 3.1vw, 2.35rem);
   line-height: 1.08;
+}
+
+.now-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: clamp(1rem, 3vw, 1.35rem);
 }
 
 .action-list {
@@ -1587,6 +1626,16 @@ details p {
   color: white;
   content: counter(steps);
   font-weight: 950;
+}
+
+.action-list li:first-child {
+  border-color: rgba(215, 38, 46, 0.24);
+  background: #fff4f5;
+  box-shadow: inset 0 0 0 1px rgba(215, 38, 46, 0.08);
+}
+
+.action-list li:first-child::before {
+  background: var(--red);
 }
 
 .person-result-panel {
@@ -1881,7 +1930,7 @@ details p {
 
 .result-columns {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   gap: 1rem;
   align-items: start;
   margin-top: 1rem;
@@ -1892,8 +1941,14 @@ details p {
   border-radius: var(--radius);
 }
 
+.result-columns article:first-child {
+  border-color: rgba(0, 65, 130, 0.18);
+  background: linear-gradient(180deg, #ffffff 0%, #f6faff 100%);
+}
+
 .result-columns h3 {
   margin-bottom: 1rem;
+  font-size: 1.2rem;
 }
 
 .result-columns p,
@@ -1988,7 +2043,8 @@ details p {
   .result-edit-grid,
   .checkout-grid,
   .person-fields,
-  .document-editor > div {
+  .document-editor > div,
+  .result-summary-strip {
     grid-template-columns: 1fr;
   }
 
@@ -2003,6 +2059,11 @@ details p {
 
   .result-verdict {
     max-width: 100%;
+  }
+
+  .result-summary-strip {
+    width: 100%;
+    padding-right: 0;
   }
 
   .result-hero h1 {
