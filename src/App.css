@@ -1999,6 +1999,74 @@ details p {
 }
 
 @media (max-width: 560px) {
+  .cookie-backdrop {
+    align-items: end;
+    padding: 0.5rem;
+  }
+
+  .cookie-modal {
+    width: 100%;
+    max-height: calc(100svh - 1rem);
+    padding: 0.9rem;
+    border-radius: var(--radius);
+  }
+
+  .cookie-modal .section-kicker {
+    margin-bottom: 0.45rem;
+    font-size: 0.68rem;
+  }
+
+  .cookie-modal h2 {
+    margin-bottom: 0.45rem;
+    font-size: 1.35rem;
+    line-height: 1.05;
+  }
+
+  .cookie-modal p {
+    margin-bottom: 0.6rem;
+    font-size: 0.9rem;
+    line-height: 1.35;
+  }
+
+  .cookie-options {
+    gap: 0.45rem;
+    margin: 0.75rem 0;
+  }
+
+  .cookie-options label {
+    grid-template-columns: 1rem 1fr;
+    gap: 0.55rem;
+    padding: 0.62rem;
+  }
+
+  .cookie-options input {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .cookie-options strong {
+    margin-bottom: 0.12rem;
+    font-size: 0.88rem;
+  }
+
+  .cookie-options span {
+    font-size: 0.82rem;
+    line-height: 1.28;
+  }
+
+  .cookie-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+
+  .cookie-actions .primary-button,
+  .cookie-actions .secondary-button {
+    min-height: 2.55rem;
+    padding: 0 0.8rem;
+    font-size: 0.9rem;
+  }
+
   .site-header {
     width: min(100% - 1rem, 1120px);
     margin-top: 0.5rem;
