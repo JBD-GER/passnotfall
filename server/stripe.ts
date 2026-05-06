@@ -1,3 +1,5 @@
+import { createPassnotfallCase, updateCaseById } from "./supabase";
+
 type BillingData = {
   firstName?: string;
   lastName?: string;
@@ -178,6 +180,16 @@ export async function createCheckoutSessionHandler(req: any, res: any, env: Env 
 
     const origin = getOrigin(req, env);
     const reference = payload.reference || `PN-${Date.now()}`;
+    const storedCase = await createPassnotfallCase(
+      {
+        reference,
+        customer_email: email,
+        billing_data: billing,
+        answers: payload.answers || {},
+        status: "checkout_started"
+      },
+      env
+    );
     const unitAmount = Number(env.STRIPE_PRICE_CENTS || "4900");
     const currency = (env.STRIPE_CURRENCY || "eur").toLowerCase();
     const params = new URLSearchParams();
@@ -210,12 +222,14 @@ export async function createCheckoutSessionHandler(req: any, res: any, env: Env 
       "PassNotfall ist ein privater Anbieter. Keine Behörde, kein amtliches Dokument und keine Garantie für Boarding oder Einreise."
     );
     params.append("metadata[passnotfall_reference]", reference);
+    params.append("metadata[case_id]", storedCase.id);
     params.append("metadata[email]", email);
     params.append("metadata[airport]", limitMetadata(payload.answers?.airport));
     params.append("metadata[destination]", limitMetadata(payload.answers?.destination));
     params.append("metadata[time]", limitMetadata(payload.answers?.time));
     params.append("metadata[problem]", limitMetadata(payload.answers?.problem));
     params.append("payment_intent_data[metadata][passnotfall_reference]", reference);
+    params.append("payment_intent_data[metadata][case_id]", storedCase.id);
     params.append("payment_intent_data[metadata][email]", email);
 
     getPaymentMethodTypes(env).forEach((paymentMethodType, index) => {
@@ -231,13 +245,33 @@ export async function createCheckoutSessionHandler(req: any, res: any, env: Env 
     const sessionResponse = await stripeRequest(env, "/checkout/sessions", params);
 
     if (!sessionResponse.ok) {
+      await updateCaseById(
+        storedCase.id,
+        {
+          status: "checkout_failed",
+          stripe_error: sessionResponse.data
+        },
+        env
+      ).catch(() => null);
       sendJson(res, sessionResponse.status, { error: "Stripe checkout session creation failed", details: sessionResponse.data });
       return;
     }
 
+    await updateCaseById(
+      storedCase.id,
+      {
+        status: "checkout_created",
+        stripe_checkout_session_id: sessionResponse.data.id,
+        stripe_customer_id: customerResponse.data.id
+      },
+      env
+    );
+
     sendJson(res, 200, {
       id: sessionResponse.data.id,
-      url: sessionResponse.data.url
+      url: sessionResponse.data.url,
+      caseId: storedCase.id,
+      accessToken: storedCase.accessToken
     });
   } catch (error) {
     sendJson(res, 500, { error: "Checkout session failed", details: { message: getSafeErrorMessage(error) } });
@@ -281,6 +315,7 @@ export async function verifyCheckoutSessionHandler(req: any, res: any, env: Env 
       currency: session.currency,
       customer_email: session.customer_details?.email || session.customer_email,
       reference: session.client_reference_id || session.metadata?.passnotfall_reference,
+      case_id: session.metadata?.case_id,
       invoice: invoice
         ? {
             id: invoice.id,

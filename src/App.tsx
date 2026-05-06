@@ -51,6 +51,8 @@ type PendingCheckout = {
   billingData: BillingData;
   createdAt: number;
   sessionId?: string;
+  caseId?: string;
+  accessToken?: string;
 };
 
 type VerifiedCheckoutSession = {
@@ -60,6 +62,7 @@ type VerifiedCheckoutSession = {
   amount_total?: number;
   customer_email?: string;
   reference?: string;
+  case_id?: string;
   invoice?: {
     id: string;
     number?: string;
@@ -67,6 +70,19 @@ type VerifiedCheckoutSession = {
     invoice_pdf?: string;
     status?: string;
   } | null;
+};
+
+type StoredCase = {
+  reference: string;
+  status: string;
+  customer_email: string;
+  answers: Answers;
+  billing_data?: BillingData;
+  assessment?: AiAssessment & Partial<Assessment>;
+  access_url?: string;
+  stripe_invoice_url?: string;
+  stripe_invoice_number?: string;
+  confirmation_reference?: string;
 };
 
 type SingleAnswerKey = Exclude<keyof Answers, "documents" | "affectedPersons">;
@@ -113,7 +129,7 @@ type FormStep = ChoiceStep | SelectStep | MultiStep | PeopleStep | EmailStep;
 type View = "start" | "form" | "checkout" | "loading" | "result";
 type LegalRoute = "impressum" | "datenschutz" | "agb";
 type SeoRoute = "reisepass-abgelaufen" | "personalausweis-abgelaufen";
-type Route = "home" | LegalRoute | SeoRoute;
+type Route = "home" | LegalRoute | SeoRoute | "case";
 type ConfirmationStatus = "idle" | "sending" | "sent" | "error" | "skipped";
 type LegalModal = "agb" | "privacy" | null;
 
@@ -470,6 +486,12 @@ const pageMeta: Record<Route, PageMeta> = {
     description: "Allgemeine Geschäftsbedingungen für die private digitale Orientierungshilfe PassNotfall.",
     path: "/agb",
     robots: "noindex,follow"
+  },
+  case: {
+    title: "Gespeicherter PassNotfall-Fall | PassNotfall",
+    description: "Privater Zugriff auf eine gespeicherte PassNotfall-Auswertung.",
+    path: "/fall",
+    robots: "noindex,nofollow"
   }
 };
 
@@ -667,6 +689,10 @@ function trackEvent(eventName: string) {
 }
 
 function getRouteFromPath(pathname: string): Route {
+  if (pathname.startsWith("/fall/")) {
+    return "case";
+  }
+
   if (pathname === "/reisepass-abgelaufen") {
     return "reisepass-abgelaufen";
   }
@@ -1471,6 +1497,127 @@ function SeoPage({
   );
 }
 
+function StoredCasePage({
+  storedCase,
+  isLoading,
+  error,
+  startCheck
+}: {
+  storedCase: StoredCase | null;
+  isLoading: boolean;
+  error: string;
+  startCheck: () => void;
+}) {
+  if (isLoading) {
+    return (
+      <main className="loading-page" aria-live="polite">
+        <div className="loader"></div>
+        <p className="section-kicker">Fall wird geladen</p>
+        <h1>Wir öffnen deine Auswertung.</h1>
+      </main>
+    );
+  }
+
+  if (error || !storedCase) {
+    return (
+      <main className="legal-page">
+        <article className="legal-document">
+          <p className="section-kicker">Fallzugriff</p>
+          <h1>Fall konnte nicht geöffnet werden</h1>
+          <p>{error || "Der private Link ist ungültig oder abgelaufen."}</p>
+          <button className="primary-button" type="button" onClick={startCheck}>
+            Neuen Check starten
+          </button>
+        </article>
+      </main>
+    );
+  }
+
+  const storedAnswers = storedCase.answers || getInitialAnswers();
+  const storedAssessment = mergeAssessment(createAssessment(storedAnswers), storedCase.assessment || null);
+
+  return (
+    <main className="result-page">
+      <section className="result-hero">
+        <div>
+          <p className="section-kicker">Gespeicherter Fall</p>
+          <h1>{storedAssessment.headline}</h1>
+          <p className="result-verdict">{storedAssessment.verdict}</p>
+        </div>
+        <div className={`risk-card risk-${storedAssessment.risk.toLowerCase().replace(/\s+/g, "-")}`}>
+          <span>Risiko</span>
+          <strong>{storedAssessment.risk}</strong>
+        </div>
+      </section>
+
+      <section className="now-panel">
+        <p className="section-kicker">Jetzt sofort machen</p>
+        <h2>{storedAssessment.primaryAction}</h2>
+        <ol className="action-list">
+          {storedAssessment.steps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="email-status-panel sent">
+        <p className="section-kicker">Referenz</p>
+        <h2>{storedCase.reference}</h2>
+        <p>
+          Dieser Fall wurde gespeichert und kann über diesen privaten Link erneut geöffnet werden.
+          {storedCase.stripe_invoice_url ? (
+            <>
+              {" "}
+              <a href={storedCase.stripe_invoice_url} target="_blank" rel="noreferrer">
+                Rechnung öffnen
+              </a>
+            </>
+          ) : null}
+        </p>
+      </section>
+
+      <section className="result-columns">
+        <article>
+          <h3>Zuständige Stelle</h3>
+          <p>
+            <strong>{storedAssessment.airport.office}</strong>
+            <br />
+            {storedAssessment.airport.address}
+            <br />
+            Telefon:{" "}
+            <a href={`tel:${storedAssessment.airport.phone.replace(/[^\d+]/g, "")}`}>
+              {storedAssessment.airport.phone}
+            </a>
+            <br />
+            Hinweis: {storedAssessment.airport.note}
+          </p>
+        </article>
+        <article>
+          <h3>Empfohlener Weg</h3>
+          <p>{storedAssessment.route}</p>
+        </article>
+        <article>
+          <h3>Einpacken</h3>
+          <ul>
+            {storedAssessment.documents.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </article>
+        <article>
+          <h3>Wichtig</h3>
+          <ul>
+            {storedAssessment.warnings.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+            <li>PassNotfall ist ein privater Anbieter und keine staatliche Website.</li>
+          </ul>
+        </article>
+      </section>
+    </main>
+  );
+}
+
 type ResultAnswerEditorProps = {
   answers: Answers;
   isOpen: boolean;
@@ -1769,6 +1916,11 @@ function App() {
   const [isRedirectingToStripe, setIsRedirectingToStripe] = useState(false);
   const [stripeInvoiceUrl, setStripeInvoiceUrl] = useState("");
   const [stripeInvoiceNumber, setStripeInvoiceNumber] = useState("");
+  const [caseAccessToken, setCaseAccessToken] = useState("");
+  const [caseAccessUrl, setCaseAccessUrl] = useState("");
+  const [storedCase, setStoredCase] = useState<StoredCase | null>(null);
+  const [storedCaseError, setStoredCaseError] = useState("");
+  const [isStoredCaseLoading, setIsStoredCaseLoading] = useState(false);
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
   const visibleFormSteps = useMemo(
     () => formSteps.filter((step) => !("shouldShow" in step) || !step.shouldShow || step.shouldShow(answers)),
@@ -1786,6 +1938,14 @@ function App() {
   useEffect(() => {
     updatePageMeta(route, view);
   }, [route, view]);
+
+  useEffect(() => {
+    if (route !== "case") {
+      return;
+    }
+
+    loadStoredCase();
+  }, [route]);
 
   useEffect(() => {
     function handlePopState() {
@@ -1834,6 +1994,40 @@ function App() {
     setRoute(getRouteFromPath(path));
     setView("start");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function loadStoredCase() {
+    const token = window.location.pathname.split("/fall/")[1] || "";
+
+    setIsStoredCaseLoading(true);
+    setStoredCaseError("");
+
+    try {
+      const response = await fetch(`/api/case?token=${encodeURIComponent(token)}`);
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Der private Link ist ungültig oder abgelaufen.");
+      }
+
+      setStoredCase({
+        reference: data.reference,
+        status: data.status,
+        customer_email: data.customer_email,
+        answers: data.answers,
+        billing_data: data.billing_data,
+        assessment: data.assessment,
+        access_url: data.access_url,
+        stripe_invoice_url: data.stripe_invoice_url,
+        stripe_invoice_number: data.stripe_invoice_number,
+        confirmation_reference: data.confirmation_reference
+      });
+    } catch (error) {
+      setStoredCase(null);
+      setStoredCaseError(error instanceof Error ? error.message : "Der Fall konnte nicht geladen werden.");
+    } finally {
+      setIsStoredCaseLoading(false);
+    }
   }
 
   function updateAnswer(key: SingleAnswerKey, value: string) {
@@ -2007,6 +2201,8 @@ function App() {
       setBillingData(pendingCheckout.billingData);
       setStripeInvoiceUrl(verifiedSession.invoice?.hosted_invoice_url || verifiedSession.invoice?.invoice_pdf || "");
       setStripeInvoiceNumber(verifiedSession.invoice?.number || "");
+      setCaseAccessToken(pendingCheckout.accessToken || "");
+      setCaseAccessUrl(pendingCheckout.accessToken ? `${window.location.origin}/fall/${pendingCheckout.accessToken}` : "");
       clearPendingCheckout();
       trackEvent("stripe_checkout_paid");
       await submitForm(pendingCheckout.answers);
@@ -2072,7 +2268,7 @@ function App() {
         throw new Error(getStripeCheckoutResponseMessage(data, response.status));
       }
 
-      savePendingCheckout({ ...pendingCheckout, sessionId: data.id });
+      savePendingCheckout({ ...pendingCheckout, sessionId: data.id, caseId: data.caseId, accessToken: data.accessToken });
       trackEvent("stripe_checkout_started");
       window.location.assign(data.url);
     } catch (error) {
@@ -2134,7 +2330,16 @@ function App() {
       const response = await fetch("/api/send-confirmation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, answers, assessment, billingData })
+        body: JSON.stringify({
+          email,
+          answers,
+          assessment,
+          billingData,
+          accessToken: caseAccessToken,
+          accessUrl: caseAccessUrl,
+          stripeInvoiceUrl,
+          stripeInvoiceNumber
+        })
       });
       const data = await response.json().catch(() => null);
 
@@ -2144,7 +2349,8 @@ function App() {
 
       setConfirmationStatus("sent");
       setConfirmationReference(data.reference || "");
-      setConfirmationMessage("PDF-Bestätigung wurde automatisch per E-Mail verschickt.");
+      setCaseAccessUrl(data.accessUrl || caseAccessUrl);
+      setConfirmationMessage("PDF-Bestätigung und Zugriffslink wurden automatisch per E-Mail verschickt.");
     } catch {
       setConfirmationStatus("error");
       setConfirmationMessage("Die automatische E-Mail konnte gerade nicht verschickt werden. Bitte Resend-Key und Absender prüfen.");
@@ -2386,6 +2592,19 @@ function App() {
             </section>
           )}
 
+          {caseAccessUrl && (
+            <section className="email-status-panel sent">
+              <p className="section-kicker">Fallzugriff</p>
+              <h2>Dieser Fall ist gespeichert</h2>
+              <p>
+                Du kannst die Auswertung später jederzeit über deinen privaten Link öffnen.{" "}
+                <a href={caseAccessUrl} target="_blank" rel="noreferrer">
+                  Fall öffnen
+                </a>
+              </p>
+            </section>
+          )}
+
           <ResultAnswerEditor
             answers={answers}
             isOpen={isResultEditorOpen}
@@ -2462,10 +2681,24 @@ function App() {
           </button>
         </header>
 
-        <main>
-          {isLegalRoute(route) && <LegalPage route={route} />}
-          {isSeoRoute(route) && <SeoPage route={route} startCheck={startCheck} navigateTo={navigateTo} />}
-        </main>
+        {route === "case" && (
+          <StoredCasePage
+            storedCase={storedCase}
+            isLoading={isStoredCaseLoading}
+            error={storedCaseError}
+            startCheck={startCheck}
+          />
+        )}
+        {isLegalRoute(route) && (
+          <main>
+            <LegalPage route={route} />
+          </main>
+        )}
+        {isSeoRoute(route) && (
+          <main>
+            <SeoPage route={route} startCheck={startCheck} navigateTo={navigateTo} />
+          </main>
+        )}
 
         <footer className="site-footer">
           <div>

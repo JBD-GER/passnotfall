@@ -3,6 +3,8 @@ import react from "@vitejs/plugin-react";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { assessmentHandler } from "./server/assessment";
+import { sendConfirmationHandler } from "./server/confirmation";
 import { createCheckoutSessionHandler, verifyCheckoutSessionHandler } from "./server/stripe";
 
 type ConfirmationPayload = {
@@ -271,6 +273,14 @@ export default defineConfig(({ mode }) => {
 
           server.middlewares.use("/api/verify-checkout-session", async (req: any, res: any) => {
             await verifyCheckoutSessionHandler(req, res, env);
+          });
+
+          server.middlewares.use("/api/assessment", async (req: any, res: any) => {
+            await assessmentHandler(req, res, env);
+          });
+
+          server.middlewares.use("/api/send-confirmation", async (req: any, res: any) => {
+            await sendConfirmationHandler(req, res, env);
           });
 
           server.middlewares.use("/api/assessment", async (req: any, res: any) => {
