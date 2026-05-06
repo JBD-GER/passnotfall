@@ -628,6 +628,12 @@ function clearPendingCheckout() {
   localStorage.removeItem(pendingCheckoutStorageKey);
 }
 
+function getCheckoutErrorMessage(error: unknown) {
+  return error instanceof Error && error.message
+    ? error.message
+    : "Stripe Checkout konnte gerade nicht gestartet werden. Bitte prüfe STRIPE_SECRET_KEY, Live-Modus und Stripe-Konfiguration.";
+}
+
 function updateGoogleConsent(consent: ConsentSettings) {
   window.gtag?.("consent", "update", {
     analytics_storage: consent.statistics ? "granted" : "denied",
@@ -2047,17 +2053,16 @@ function App() {
       const data = await response.json().catch(() => null);
 
       if (!response.ok || !data?.url || !data?.id) {
-        throw new Error(data?.error || "Stripe Checkout konnte nicht gestartet werden.");
+        const stripeMessage = data?.details?.error?.message || data?.details?.message || data?.error;
+        throw new Error(stripeMessage || "Stripe Checkout konnte nicht gestartet werden.");
       }
 
       savePendingCheckout({ ...pendingCheckout, sessionId: data.id });
       trackEvent("stripe_checkout_started");
       window.location.assign(data.url);
-    } catch {
+    } catch (error) {
       setIsRedirectingToStripe(false);
-      setCheckoutError(
-        "Stripe Checkout konnte gerade nicht gestartet werden. Bitte prüfe STRIPE_SECRET_KEY, Live-Modus und Stripe-Konfiguration."
-      );
+      setCheckoutError(getCheckoutErrorMessage(error));
     }
   }
 
