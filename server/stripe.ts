@@ -99,6 +99,10 @@ function getPaymentMethodTypes(env: Env) {
     .filter(Boolean);
 }
 
+function allowsPromotionCodes(env: Env) {
+  return env.STRIPE_ALLOW_PROMOTION_CODES !== "false";
+}
+
 async function stripeRequest(env: Env, path: string, params?: URLSearchParams, method = "POST") {
   const secretKey = env.STRIPE_SECRET_KEY;
 
@@ -202,7 +206,7 @@ export async function createCheckoutSessionHandler(req: any, res: any, env: Env 
     params.append("billing_address_collection", "required");
     params.append("phone_number_collection[enabled]", "true");
     params.append("tax_id_collection[enabled]", "true");
-    params.append("allow_promotion_codes", env.STRIPE_ALLOW_PROMOTION_CODES === "true" ? "true" : "false");
+    params.append("allow_promotion_codes", allowsPromotionCodes(env) ? "true" : "false");
     params.append("customer_update[name]", "auto");
     params.append("customer_update[address]", "auto");
     params.append("submit_type", "pay");
