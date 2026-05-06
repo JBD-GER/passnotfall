@@ -2424,15 +2424,6 @@ function App() {
               Personalausweis abgelaufen
             </a>
             <button type="button" onClick={startCheck}>Check starten</button>
-            <a href="/impressum" onClick={(event) => { event.preventDefault(); navigateTo("/impressum"); }}>
-              Impressum
-            </a>
-            <a href="/datenschutz" onClick={(event) => { event.preventDefault(); navigateTo("/datenschutz"); }}>
-              Datenschutz
-            </a>
-            <a href="/agb" onClick={(event) => { event.preventDefault(); navigateTo("/agb"); }}>
-              AGB
-            </a>
           </nav>
           <button className="header-cta" type="button" onClick={startCheck}>
             Jetzt prüfen
