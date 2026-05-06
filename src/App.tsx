@@ -634,6 +634,16 @@ function getCheckoutErrorMessage(error: unknown) {
     : "Stripe Checkout konnte gerade nicht gestartet werden. Bitte prüfe STRIPE_SECRET_KEY, Live-Modus und Stripe-Konfiguration.";
 }
 
+function getStripeCheckoutResponseMessage(data: any, status: number) {
+  const stripeMessage = data?.details?.error?.message || data?.details?.message || data?.error;
+
+  if (stripeMessage) {
+    return stripeMessage;
+  }
+
+  return `Stripe Checkout konnte nicht gestartet werden. API-Status: ${status}. Prüfe, ob /api/create-checkout-session erreichbar ist und die Stripe-Umgebungsvariablen im Live-Deployment gesetzt sind.`;
+}
+
 function isValidEmailAddress(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
@@ -2059,8 +2069,7 @@ function App() {
       const data = await response.json().catch(() => null);
 
       if (!response.ok || !data?.url || !data?.id) {
-        const stripeMessage = data?.details?.error?.message || data?.details?.message || data?.error;
-        throw new Error(stripeMessage || "Stripe Checkout konnte nicht gestartet werden.");
+        throw new Error(getStripeCheckoutResponseMessage(data, response.status));
       }
 
       savePendingCheckout({ ...pendingCheckout, sessionId: data.id });
