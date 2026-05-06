@@ -103,6 +103,16 @@ function allowsPromotionCodes(env: Env) {
   return env.STRIPE_ALLOW_PROMOTION_CODES !== "false";
 }
 
+function appendPaymentMethodTypes(params: URLSearchParams, paymentMethodTypes: string[]) {
+  paymentMethodTypes.forEach((paymentMethodType, index) => {
+    params.append(`payment_method_types[${index}]`, paymentMethodType);
+  });
+}
+
+function isNoValidPaymentMethodTypesError(data: any) {
+  return String(data?.error?.message || "").toLowerCase().includes("no valid payment method types");
+}
+
 async function stripeRequest(env: Env, path: string, params?: URLSearchParams, method = "POST") {
   const secretKey = env.STRIPE_SECRET_KEY;
 
@@ -236,9 +246,9 @@ export async function createCheckoutSessionHandler(req: any, res: any, env: Env 
     params.append("payment_intent_data[metadata][case_id]", storedCase.id);
     params.append("payment_intent_data[metadata][email]", email);
 
-    getPaymentMethodTypes(env).forEach((paymentMethodType, index) => {
-      params.append(`payment_method_types[${index}]`, paymentMethodType);
-    });
+    const paymentMethodTypes = getPaymentMethodTypes(env);
+    const usesDynamicPaymentMethods = paymentMethodTypes.length === 0;
+    appendPaymentMethodTypes(params, paymentMethodTypes);
 
     if (env.STRIPE_TAX_RATE_ID) {
       params.append("line_items[0][tax_rates][0]", env.STRIPE_TAX_RATE_ID);
@@ -246,7 +256,13 @@ export async function createCheckoutSessionHandler(req: any, res: any, env: Env 
       params.append("automatic_tax[enabled]", "true");
     }
 
-    const sessionResponse = await stripeRequest(env, "/checkout/sessions", params);
+    let sessionResponse = await stripeRequest(env, "/checkout/sessions", params);
+
+    if (!sessionResponse.ok && usesDynamicPaymentMethods && isNoValidPaymentMethodTypesError(sessionResponse.data)) {
+      const fallbackParams = new URLSearchParams(params.toString());
+      appendPaymentMethodTypes(fallbackParams, ["card"]);
+      sessionResponse = await stripeRequest(env, "/checkout/sessions", fallbackParams);
+    }
 
     if (!sessionResponse.ok) {
       await updateCaseById(
