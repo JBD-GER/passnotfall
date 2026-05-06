@@ -1481,6 +1481,13 @@ details p {
   line-height: 1.55;
 }
 
+.result-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
 .risk-card {
   position: absolute;
   right: 0;

@@ -1569,22 +1569,6 @@ function StoredCasePage({
         </ol>
       </section>
 
-      <section className="email-status-panel sent">
-        <p className="section-kicker">Referenz</p>
-        <h2>{storedCase.reference}</h2>
-        <p>
-          Dieser Fall wurde gespeichert und kann über diesen privaten Link erneut geöffnet werden.
-          {storedCase.stripe_invoice_url ? (
-            <>
-              {" "}
-              <a href={storedCase.stripe_invoice_url} target="_blank" rel="noreferrer">
-                Rechnung öffnen
-              </a>
-            </>
-          ) : null}
-        </p>
-      </section>
-
       <section className="result-columns">
         <article>
           <h3>Zuständige Stelle</h3>
@@ -1622,6 +1606,22 @@ function StoredCasePage({
             <li>PassNotfall ist ein privater Anbieter und keine staatliche Website.</li>
           </ul>
         </article>
+      </section>
+
+      <section className="email-status-panel sent">
+        <p className="section-kicker">Referenz</p>
+        <h2>{storedCase.reference}</h2>
+        <p>
+          Dieser Fall wurde gespeichert und kann über diesen privaten Link erneut geöffnet werden.
+          {storedCase.stripe_invoice_url ? (
+            <>
+              {" "}
+              <a href={storedCase.stripe_invoice_url} target="_blank" rel="noreferrer">
+                Rechnung öffnen
+              </a>
+            </>
+          ) : null}
+        </p>
       </section>
     </main>
   );
@@ -2574,6 +2574,11 @@ function App() {
               <p className="section-kicker">Dein Ergebnis</p>
               <h1>{assessment.headline}</h1>
               <p className="result-verdict">{assessment.verdict}</p>
+              <div className="result-hero-actions">
+                <button className="secondary-button small" type="button" onClick={scrollToResultEditor}>
+                  Angaben bearbeiten
+                </button>
+              </div>
             </div>
             <div className={`risk-card risk-${assessment.risk.toLowerCase().replace(/\s+/g, "-")}`}>
               <span>Risiko</span>
@@ -2589,9 +2594,6 @@ function App() {
               <a className="primary-button small" href={`tel:${assessment.airport.phone.replace(/[^\d+]/g, "")}`}>
                 Stelle anrufen
               </a>
-              <button className="secondary-button small" type="button" onClick={scrollToResultEditor}>
-                Angaben prüfen
-              </button>
             </div>
             <ol className="action-list">
               {assessment.steps.map((step) => (
@@ -2617,43 +2619,6 @@ function App() {
               ))}
             </div>
           </section>
-
-          {confirmationMessage && (
-            <section className={`email-status-panel ${confirmationStatus}`}>
-              <p className="section-kicker">E-Mail-Bestätigung</p>
-              <h2>{confirmationStatus === "sent" ? "PDF wurde verschickt" : "E-Mail-Hinweis"}</h2>
-              <p>
-                {confirmationMessage}
-                {confirmationReference ? ` Referenz: ${confirmationReference}` : ""}
-              </p>
-            </section>
-          )}
-
-          {stripeInvoiceUrl && (
-            <section className="email-status-panel sent">
-              <p className="section-kicker">Stripe Rechnung</p>
-              <h2>{stripeInvoiceNumber ? `Rechnung ${stripeInvoiceNumber}` : "Rechnung wurde erstellt"}</h2>
-              <p>
-                Die Rechnung wurde nach der erfolgreichen Zahlung über Stripe erstellt.{" "}
-                <a href={stripeInvoiceUrl} target="_blank" rel="noreferrer">
-                  Rechnung öffnen
-                </a>
-              </p>
-            </section>
-          )}
-
-          {caseAccessUrl && (
-            <section className="email-status-panel sent">
-              <p className="section-kicker">Fallzugriff</p>
-              <h2>Dieser Fall ist gespeichert</h2>
-              <p>
-                Du kannst die Auswertung später jederzeit über deinen privaten Link öffnen.{" "}
-                <a href={caseAccessUrl} target="_blank" rel="noreferrer">
-                  Fall öffnen
-                </a>
-              </p>
-            </section>
-          )}
 
           <ResultAnswerEditor
             answers={answers}
@@ -2701,6 +2666,43 @@ function App() {
               </ul>
             </article>
           </section>
+
+          {confirmationMessage && (
+            <section className={`email-status-panel ${confirmationStatus}`}>
+              <p className="section-kicker">E-Mail-Bestätigung</p>
+              <h2>{confirmationStatus === "sent" ? "PDF wurde verschickt" : "E-Mail-Hinweis"}</h2>
+              <p>
+                {confirmationMessage}
+                {confirmationReference ? ` Referenz: ${confirmationReference}` : ""}
+              </p>
+            </section>
+          )}
+
+          {stripeInvoiceUrl && (
+            <section className="email-status-panel sent">
+              <p className="section-kicker">Stripe Rechnung</p>
+              <h2>{stripeInvoiceNumber ? `Rechnung ${stripeInvoiceNumber}` : "Rechnung wurde erstellt"}</h2>
+              <p>
+                Die Rechnung wurde nach der erfolgreichen Zahlung über Stripe erstellt.{" "}
+                <a href={stripeInvoiceUrl} target="_blank" rel="noreferrer">
+                  Rechnung öffnen
+                </a>
+              </p>
+            </section>
+          )}
+
+          {caseAccessUrl && (
+            <section className="email-status-panel sent">
+              <p className="section-kicker">Fallzugriff</p>
+              <h2>Dieser Fall ist gespeichert</h2>
+              <p>
+                Du kannst die Auswertung später jederzeit über deinen privaten Link öffnen.{" "}
+                <a href={caseAccessUrl} target="_blank" rel="noreferrer">
+                  Fall öffnen
+                </a>
+              </p>
+            </section>
+          )}
         </main>
       </div>
     );
