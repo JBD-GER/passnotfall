@@ -431,7 +431,7 @@ const legalHighlights = [
   "Geeignet bei Reisepass abgelaufen oder Personalausweis abgelaufen"
 ];
 
-const siteUrl = "https://passnotfall.de";
+const siteUrl = "https://www.passnotfall.de";
 
 const pageMeta: Record<Route, PageMeta> = {
   home: {

@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://passnotfall.de/</loc>
+    <loc>https://www.passnotfall.de/</loc>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://passnotfall.de/reisepass-abgelaufen</loc>
+    <loc>https://www.passnotfall.de/reisepass-abgelaufen</loc>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://passnotfall.de/personalausweis-abgelaufen</loc>
+    <loc>https://www.passnotfall.de/personalausweis-abgelaufen</loc>
     <priority>0.8</priority>
   </url>
 </urlset>

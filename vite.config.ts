@@ -206,7 +206,7 @@ function createConfirmationEmailHtml(payload: ConfirmationPayload, reference: st
       <div style="max-width:680px;margin:0 auto;padding:28px 16px;">
         <div style="background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #dfe7f1;box-shadow:0 18px 44px rgba(0,59,120,.12);">
           <div style="padding:24px 28px;border-bottom:5px solid #D7262E;">
-            <img src="https://passnotfall.de/Logo_Passnotfall.png" alt="PassNotfall" style="width:190px;max-width:70%;height:auto;display:block;" />
+            <img src="https://www.passnotfall.de/Logo_Passnotfall.png" alt="PassNotfall" style="width:190px;max-width:70%;height:auto;display:block;" />
           </div>
           <div style="padding:28px;">
             <p style="margin:0 0 10px;color:#003B78;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;">Deine Bestätigung</p>
